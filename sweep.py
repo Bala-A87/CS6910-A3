@@ -58,7 +58,7 @@ def perform_run(config=None):
                         output_enc, (hidden_enc, cell_enc) = encoder(char, (hidden_enc, cell_enc))
                     else:
                         output_enc, hidden_enc = encoder(char, hidden_enc)
-                    outputs_enc[i] = outputs_enc[0, 0]
+                    outputs_enc[i] = output_enc[0, 0]
                 
                 input_dec = torch.tensor([[0]]).to(device, non_blocking=True)
                 target_vector = word_to_tensor(tam_alphabet, train_data_target[train_index]).to(device, non_blocking=True)
@@ -153,7 +153,7 @@ def perform_run(config=None):
 
 sweep_config = {
     'method': 'bayes',
-    'name': 'attention_sweep'
+    'name': 'attention_sweep_lstm'
 }
 
 sweep_metric = {
@@ -164,7 +164,8 @@ sweep_config['metric'] = sweep_metric
 
 parameters = {
     'cell_type': {
-        'values': ['rnn', 'lstm', 'gru']
+        # 'values': ['rnn', 'lstm', 'gru']
+        'value': 'lstm'
     },
     'embedding_size': {
         'values': [8, 16, 32]

@@ -67,17 +67,20 @@ class AttnDecoder(nn.Module):
         super().__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
+        self.is_lstm = cell_type == nn.LSTM
         self.embedding = nn.Embedding(num_embeddings=output_size, embedding_dim=embedding_size)
         self.attn = nn.Linear(hidden_size+embedding_size, 100)
         self.attn_combine = nn.Linear(hidden_size+embedding_size, self.hidden_size)
         self.decoder = cell_type(input_size=hidden_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout)
-        self.is_lstm = False
         self.out = nn.Linear(in_features=hidden_size, out_features=output_size)
     
     def forward(self, x, hidden, output_enc):
         embedded = self.embedding(x).reshape(1, 1, -1)
 
-        attn_wts = F.softmax(self.attn(torch.cat([embedded[0], hidden[0]], 1)), dim=1)
+        if self.is_lstm:
+            attn_wts = F.softmax(self.attn(torch.cat([embedded[0], hidden[0][0]], 1)), dim=1)
+        else:
+            attn_wts = F.softmax(self.attn(torch.cat([embedded[0], hidden[0]], 1)), dim=1)
         attn_applied = torch.bmm(attn_wts.unsqueeze(0), output_enc.unsqueeze(0))
 
         output = torch.cat([embedded[0], attn_applied[0]], 1)
