@@ -15,6 +15,7 @@ class Encoder(nn.Module):
         super().__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
+        self.is_lstm = cell_type == nn.LSTM
         self.embedding = nn.Embedding(num_embeddings=input_size, embedding_dim=embedding_size)
         self.encoder = cell_type(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout) 
     
@@ -39,6 +40,7 @@ class Decoder(nn.Module):
         super().__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
+        self.is_lstm = cell_type == nn.LSTM
         self.embedding = nn.Embedding(num_embeddings=output_size, embedding_dim=embedding_size)
         self.decoder = cell_type(input_size=embedding_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout) 
         self.out = nn.Linear(in_features=hidden_size, out_features=output_size)
