@@ -13,7 +13,7 @@ parser.add_argument('-es', '--embed_size', type=int, default=16, help='Embedding
 parser.add_argument('-hs', '--hidden_size', type=int, default=256, help='Hidden size for the encoder & decoder')
 parser.add_argument('-el', '--encoder_layers', type=int, default=1, help='Number of layers in the encoder')
 parser.add_argument('-dl', '--decoder_layers', type=int, default=2, help='Number of layers in the decoder')
-parser.add_argument('-do, --dropout', type=float, default=0.3, help='Dropout rate for the encoder & decoder')
+parser.add_argument('-do', '--dropout', type=float, default=0.3, help='Dropout rate for the encoder & decoder')
 parser.add_argument('-lr', '--learning_rate', type=float, default=1e-3, help='Learning rate for optimizing encoder & decoder')
 parser.add_argument('-wd', '--weight_decay', type=float, default=0., help='Weight decay used for optimizing encoder & decoder')
 parser.add_argument('-e', '--epochs', type=int, default=10, help='Number of epochs to train the model for')
@@ -23,6 +23,7 @@ parser.add_argument('-d', '--device', type=str, default='cpu', help='Device to p
 parser.add_argument('-we', '--wandb_entity', type=str, default=None, help='WandB entity whose run is to be tracked. Locally logged in WandB entity would be used if not passed')
 parser.add_argument('-wp', '--wandb_project', type=str, default=None, help='WandB project to log the run on. Logging is skipped if a value is not passed')
 parser.add_argument('-run', '--run_test', action='store_true', help='Whether to run the trained model on test data. Predictions are stored in a folder named "test_preds"')
+parser.add_argument('-s', '--save_model', action='store_true', help='Whether to save the trained model (in a directory named models)')
 
 args = parser.parse_args()
 
@@ -41,7 +42,7 @@ cell_mapping = {
     'gru': torch.nn.GRU,
     'lstm': torch.nn.LSTM
 }
-run_name = f'{args.cell_type}_embed{args.embed_size}_hidden{args.hidden_size}_{args.encoder_layers}layerenc_{args.decoder_layers}layerdec_dropout{args.dropout}_wd{args.weight_decay}'
+run_name = f'{"attn_" if args.attention else ""}{args.cell_type}_embed{args.embed_size}_hidden{args.hidden_size}_{args.encoder_layers}layerenc_{args.decoder_layers}layerdec_dropout{args.dropout}_wd{args.weight_decay}'
 
 encoder = Encoder(eng_alphabet.letter_count, args.embed_size, args.hidden_size, cell_mapping[args.cell_type], args.encoder_layers, args.dropout).to(device, non_blocking=True)
 if args.attention:
@@ -110,7 +111,7 @@ if args.run_test:
         if test_pred == test_true+'EOW':
             test_score += 1.
     test_score /= len(test_data_target)
-    print(f'Test accuracy: {test_score}')
+    print(f'Test accuracy: {test_score:.4f}')
     if args.wandb_project is not None:
         run.log({'test_accuracy': test_score})
     preds_dir = Path('test_preds/')
@@ -124,7 +125,16 @@ if args.run_test:
         'truth': test_data_target,
         'prediction': test_preds_wo_eow
     })
-    test_preds_df.to_csv(f'test_preds/{run_name}.csv')
+    test_preds_df.to_csv(f'test_preds/{run_name}.csv', index=None)
 
 if args.wandb_project is not None:
     run.finish()
+
+if args.save_model:
+    save_path = Path('models/')
+    if not save_path.is_dir():
+        os.mkdir(save_path)
+    model_save_dir = f'models/{run_name}/'
+    os.mkdir(model_save_dir)
+    torch.save(encoder.state_dict(), f=model_save_dir+'encoder.pth')
+    torch.save(decoder.state_dict(), f=model_save_dir+'decoder.pth')
