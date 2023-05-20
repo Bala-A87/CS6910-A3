@@ -17,6 +17,8 @@ For running all code, the zipped data is expected to be downloaded and extracted
 - [train.py](./train.py): Main abstract script, using the above helper scripts to build, train and evaluate a seq2seq model
 - [sweep.py](./sweep.py): Helper script to run sweeps on WandB
 - [A3.ipynb](./A3.ipynb): Notebook for implementation checking & analysis of results
+- [models](./models/): Saved state_dicts of the best models, both with and without attention
+- [predictions_vanilla](./predictions_vanilla/), [predictions_attention](./predictions_attention/): Saved predictions by the best models, with and without attention
 
 ## Usage for train.py
 
